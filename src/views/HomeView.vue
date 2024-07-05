@@ -1,18 +1,37 @@
 <template>
-  <div class="home">
-    <img alt="Vue logo" src="../assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js + TypeScript App"/>
-  </div>
+  <div></div>
 </template>
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import HelloWorld from '@/components/HelloWorld.vue'; // @ is an alias to /src
+import axios from "axios"
+import {ref, computed, watch, onMounted} from 'vue'
+
+const pools = ref([]);
+const showPplns = ref(false);
+const showSolo = ref(false);
+const schemeButtonText = ref("SOLO");
 
 export default defineComponent({
   name: 'HomeView',
   components: {
-    HelloWorld,
   },
 });
+
+function getPools() {
+            axios
+            .get('https://pool.flazzard.com/api/pools')
+            .then((response) => {
+                pools.value =response.data.pools
+                console.log("Returned Pools: ", response.data)
+            })
+            .catch((error) => {
+                console.warn("getPools error: ", error)
+            })
+            
+        }
+
+onMounted(() => {
+  getPools()
+})
 </script>
