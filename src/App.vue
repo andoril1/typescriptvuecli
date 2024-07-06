@@ -1,10 +1,24 @@
 <template>
+  <navMenu/>
+  <!--
   <nav>
     <router-link to="/">Home</router-link> |
     <router-link to="/about">About</router-link>
+  
   </nav>
-  <router-view/>
+-->
+  <div id ="container" style="min-height: 864px; height: auto; min-width: 800px;">
+    <router-view></router-view>
+</div>
 </template>
+
+<script>
+import navMenu from '@/components/NavMenu.vue';
+export default{
+  components: {navMenu}
+}
+
+</script>
 
 <style>
 #app {
