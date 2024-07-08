@@ -1,16 +1,20 @@
+import { Coin } from "./coin.model"
+import { Networkstats } from "./networkStats.model"
+import { Paymentprocessing } from "./paymentProcessing.model"
+import { Poolstats } from "./poolStats.model"
 export interface Pool {
     id: string
-    //coin: // Need to define a separate Coin object
+    coin: Coin
     //ports: // Need to define a separate Ports object
-    //paymentProcessing: // Need to define a separate object
+    paymentProcessing: Paymentprocessing
     clientConnectionTimeout: number
     jobRebroadcastTimeout: number
     blockRefreshInterval: number
     poolFeePercent: number
     address: string
     addressInfoLink: string // Maybe use URL
-    //poolStats: // Need to define a separate object
-    //networkStats: // Need to define a separate object
+    poolStats: Poolstats
+    networkStats: Networkstats
     //topMiners: // This is an array it will need a definition if the values are objects (not number or string)
     totalPaid: number
     totalBlocks: number 

@@ -2,7 +2,7 @@
   <div class="row justify-content-center">
     <div class="col-auto">
         <div class="info-box bg-yellow-gradient">
-            <table style="margin: auto;" v-if="pools.pool">
+            <table style="margin: auto;" v-if="pool">
                 <br>
                 <tr>
                     <th id="time" style="padding-right: 10px;">[BlockChain]<br>[Height]</th>
@@ -13,13 +13,13 @@
                     <th id="time" style="padding-right: 10px;">[Block]<br>[Reward]</th>
                 </tr>
                 <tr>
-                    <td style="padding-right: 10px;">{{ pools.pool.networkStats.blockHeight }}</td>
+                    <td style="padding-right: 10px;">{{ pool.networkStats.blockHeight }}</td>
                     <td style="padding-right: 10px;">{{ filterPending.length }}</td>
-                    <td style="padding-right: 10px;">{{ pools.pool.totalBlocks }}</td>
+                    <td style="padding-right: 10px;">{{ pool.totalBlocks }}</td>
                     <td style="padding-right: 10px;">${{formatHashrate(coinPrice,7,"") }}</td>
                     <td style="padding-right: 10px;" v-if="filterConfirmed[0]">${{formatHashrate(coinPrice * filterConfirmed[0].reward,4,"")}}</td>
                     <td style="padding-right: 10px;" v-else>wait...</td>
-                    <td style="padding-right: 10px;" v-if="filterConfirmed[0]">{{ formatHashrate(filterConfirmed[0].reward,1,pools.pool.coin.symbol) }}</td>
+                    <td style="padding-right: 10px;" v-if="filterConfirmed[0]">{{ formatHashrate(filterConfirmed[0].reward,1,coin.symbol) }}</td>
                     <td style="padding-right: 10px;" v-else>wait...</td>
                 </tr>
                 <br>
@@ -32,12 +32,12 @@
                     <th id="time" style="padding-right: 10px;">[Total]<br>[Paid]</th>
                 </tr>
                 <tr>
-                    <td style="padding-right: 10px;">{{ pools.pool.networkStats.connectedPeers }}</td>
-                    <td style="padding-right: 10px;">{{ pools.pool.paymentProcessing.minimumPayment }} {{ pools.pool.coin.symbol }}</td>
-                    <td style="padding-right: 10px;">{{ pools.pool.poolFeePercent }}%</td>
+                    <td style="padding-right: 10px;">{{ pool.networkStats.connectedPeers }}</td>
+                    <td style="padding-right: 10px;">{{ pool.paymentProcessing.minimumPayment }} {{ pool.coin.symbol }}</td>
+                    <td style="padding-right: 10px;">{{ pool.poolFeePercent }}%</td>
                     <td style="padding-right: 10px;">{{ formatHashrate(PoolEffort,2,"%") }}</td>
-                    <td style="padding-right: 10px;">{{readableSeconds(pools.pool.networkStats.networkHashrate / pools.pool.poolStats.poolHashrate * pools.pool.blockRefreshInterval) }}</td>
-                    <td style="padding-right: 10px;">{{ formatHashrate(pools.pool.totalPaid,3,"") }} [{{ pools.pool.coin.symbol }}]</td>
+                    <td class = "poolTTF" style="padding-right: 10px;">{{readableSeconds(pool.networkStats.networkHashrate / pool.poolStats.poolHashrate * pool.blockRefreshInterval) }}</td>
+                    <td style="padding-right: 10px;">{{ formatHashrate(pool.totalPaid,3,"") }} [{{ pool.coin.symbol }}]</td>
                 </tr>
                 <br>
             </table>
@@ -54,15 +54,16 @@
     import eChart from './../components/eChart.vue'
     import {Coin} from '@/definitions/coin.model'
     import {Pool} from '@/definitions/pool.model'
-    const pools = ref([]);
-    const pool = ref({});
-    const coin:Coin = ref<Pool>();
+    import {getCoin} from '@/services/getCoin'
+    const pool = ref<Pool>();
+    const coin = ref<Coin>();
     const blocks = ref([]);
     const newBlocks = ref([]);
     const coinPrice = ref(0);
     const PoolEffort = ref(0);
     const route = useRoute();
     const id = ref(route.params.id);
+    const effortClass =ref("");
 
     watch(blocks,(newValue,oldValue) => { 
       if(newValue != oldValue) {
@@ -80,13 +81,11 @@
         axios
         .get('https://pool.flazzard.com/api/pools/' + id.value)
         .then((response) => {
-              pools.value =response.data
               pool.value = response.data.pool
-              coin.value = response.data.pool.coin
-              console.log("Returned Pool: ", pool.value)
+              //console.log("Returned Pool: ", pool.value)
               getNewBlocks()
               setPrice(coin.value.symbol)
-              checkEffort(pool.value.coin.family,pool.value.poolEffort, pool.value.coin.name)
+              checkEffort(coin.value.family,pool.value.poolEffort, coin.value.name)
         })
         .catch((error) => {
               console.warn("getPools error: ", error)
@@ -123,8 +122,8 @@
       
   }
   function getNewBlocks() {
-      var height:string
-      height = ((pools.value.pool.networkStats.blockHeight < 500) ? pools.value.pool.networkStats.blockHeight : 500)
+      var height:number
+      height = ((pool.value.networkStats.blockHeight < 500) ? pool.value.networkStats.blockHeight : 500)
       axios
       .get('https://pool.flazzard.com/api/pools' + '/' + id.value + '/blocks?page=0&pageSize=' + height)
       .then((response) => {
@@ -214,24 +213,29 @@
           PoolEffort.value = Number(poolEffort) * 100;
       }
       
-      var effortClass = "";
       if (PoolEffort.value >= 500) {
-          effortClass = "effort4";
+          effortClass.value = "effort4";
       } else if (PoolEffort.value >= 300) {
-          effortClass = "effort3";
+          effortClass.value = "effort3";
       } else if (PoolEffort.value >= 200) {
-          effortClass = "effort2";
+          effortClass.value = "effort2";
       } else if (PoolEffort.value >= 100) {
-          effortClass = "effort1";
+          effortClass.value = "effort1";
       }
       else {
-          effortClass = "effort0";
+          effortClass.value = "effort0";
       }
       console.log('PoolEffort value', PoolEffort)
       return PoolEffort.value
     }
     onMounted(() => {
       getPools()
+      getCoin(id.value, pool.value)
     })
 
-  </script>
+</script>
+<style>
+    .poolTTF {
+        color: effortClass[color];
+    }
+</style>

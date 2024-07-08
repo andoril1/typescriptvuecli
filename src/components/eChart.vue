@@ -33,41 +33,7 @@
   const id = ref(route.params.id);
   const colors = ['#3C5AE0', '#F95B11', '#31F911', '#F911F2'];
   let hashLabel = "H/s"
-  const option = ref({
-    title: {
-      text: '',
-      left: 'center',
-    },
-    tooltip: {
-      trigger: 'item',
-      formatter: '{a} <br/>{b} : {c} ({d}%)',
-    },
-    legend: {
-    data: ['Hashrate', 'Difficulty']
-    },
-    xAxis: {
-    type: 'category',
-    data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-    },
-    yAxis: {
-      type: 'value',
-
-    },
-    series: [
-      {
-        name: 'Hashrate',
-        type: 'line',
-        data: [820, 932, 901, 934, 1290, 1330, 2000],
-        smooth: true,
-      },
-      {
-        name: 'Difficulty',
-        type: 'line',
-        data: [500, 400, 250, 50, 100, 1500, 2000],
-        smooth: true,
-      },
-    ],
-  }); 
+  const option = ref();
     function applyStatsToChart(stats) {
         var tempOption = {
           title: {
@@ -247,7 +213,7 @@
         
     }
     let yAxisLabels = []
-    stats.forEach((singleStatObj, index)=>{
+    stats.forEach((singleStatObj, index:number)=>{
         var d = new Date(singleStatObj.created)
         tempOption.xAxis.data[index] = d.getHours() + ':00' // Format the date here
         var poolHash = getReadableHashrate(singleStatObj.poolHashrate.toFixed(2),0)
