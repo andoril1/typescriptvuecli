@@ -92,12 +92,7 @@ const selectedScheme = computed(function() {
                 return pools.value.filter((pool) => pool.paymentProcessing.payoutScheme)
             }
         });
-/*
-export default defineComponent({
-  name: 'HomeView',
-  components: {
-  },
-  */
+
     function getPools() {
             axios
             .get('https://pool.flazzard.com/api/pools')
@@ -148,7 +143,7 @@ export default defineComponent({
             return ((value / si[i].value).toFixed(decimal).replace(/.0+$|(.[0-9]*[1-9])0+$/, "$1") + " " + si[i].symbol + unit);
             }
     }
-    function getTimeAgoAdmin(date) {
+    function getTimeAgoAdmin(date:Date) {
             date=new Date(date)
         if (!date || isNaN(date.getTime())) {
             return "NEVER";
@@ -177,7 +172,7 @@ export default defineComponent({
             return "NOW";
         }
     }
-        function renderTimeAgoBox(date) {
+        function renderTimeAgoBox(date:Date) {
         var textColor = 'white';
         var borderRadius = '.25em';
         var bgColor = '';

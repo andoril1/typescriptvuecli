@@ -3,7 +3,6 @@
       <div class="row">
         <div class ="navBar" v-show="($route.params.id)">
             <router-link to="/"><button class="btn btn-info btn-fill btn-sm">Home</button></router-link> |
-            <!--
             <router-link :to="{ name: 'stats', params: { id: ($route.params.id) } }">
               <button class="btn btn-info btn-fill btn-sm">Stats</button>
             </router-link> |
@@ -27,7 +26,7 @@
             </router-link> |
             <router-link :to="{ name: 'support', params: { id: ($route.params.id) } }">
               <button class="btn btn-info btn-fill btn-sm">Support</button>
-            </router-link>-->        
+            </router-link>     
         </div>  
       </div>
     </div>
