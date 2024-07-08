@@ -52,9 +52,11 @@
     import {ref,computed, watch, onMounted} from 'vue'
     import {useRoute} from 'vue-router'
     import eChart from './../components/eChart.vue'
-import { Pool } from '@/definitions/pool.model';
+    import {Coin} from '@/definitions/coin.model'
+    import {Pool} from '@/definitions/pool.model'
     const pools = ref([]);
-    let pool:Pool = pools.value.pool
+    const pool = ref({});
+    const coin:Coin = ref<Pool>();
     const blocks = ref([]);
     const newBlocks = ref([]);
     const coinPrice = ref(0);
@@ -79,10 +81,12 @@ import { Pool } from '@/definitions/pool.model';
         .get('https://pool.flazzard.com/api/pools/' + id.value)
         .then((response) => {
               pools.value =response.data
-              console.log("Returned Pools: ", pools.value)
+              pool.value = response.data.pool
+              coin.value = response.data.pool.coin
+              console.log("Returned Pool: ", pool.value)
               getNewBlocks()
-              setPrice(pools.value.pool.coin.symbol)
-              checkEffort(pools.value.pool.coin.family,pools.value.pool.poolEffort, pools.value.pool.coin.name)
+              setPrice(coin.value.symbol)
+              checkEffort(pool.value.coin.family,pool.value.poolEffort, pool.value.coin.name)
         })
         .catch((error) => {
               console.warn("getPools error: ", error)
