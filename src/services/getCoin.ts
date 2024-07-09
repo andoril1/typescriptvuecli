@@ -6,6 +6,7 @@ export async function getCoin(id, pool:Pool) {
         .get('https://pool.flazzard.com/api/pools/' + id)
         .then((response) => {
               pool = response.data.pool
-              console.log("Returned Pool: ", response.data)
+              console.log("Returned Pool: ", pool)
+              return pool
         })
 }

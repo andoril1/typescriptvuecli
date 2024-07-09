@@ -19,7 +19,7 @@
                     <td style="padding-right: 10px;">${{formatHashrate(coinPrice,7,"") }}</td>
                     <td style="padding-right: 10px;" v-if="filterConfirmed[0]">${{formatHashrate(coinPrice * filterConfirmed[0].reward,4,"")}}</td>
                     <td style="padding-right: 10px;" v-else>wait...</td>
-                    <td style="padding-right: 10px;" v-if="filterConfirmed[0]">{{ formatHashrate(filterConfirmed[0].reward,1,coin.symbol) }}</td>
+                    <td style="padding-right: 10px;" v-if="filterConfirmed[0]">{{ formatHashrate(filterConfirmed[0].reward,1,pool.coin.symbol) }}</td>
                     <td style="padding-right: 10px;" v-else>wait...</td>
                 </tr>
                 <br>
@@ -35,8 +35,8 @@
                     <td style="padding-right: 10px;">{{ pool.networkStats.connectedPeers }}</td>
                     <td style="padding-right: 10px;">{{ pool.paymentProcessing.minimumPayment }} {{ pool.coin.symbol }}</td>
                     <td style="padding-right: 10px;">{{ pool.poolFeePercent }}%</td>
-                    <td style="padding-right: 10px;">{{ formatHashrate(PoolEffort,2,"%") }}</td>
-                    <td class = "poolTTF" style="padding-right: 10px;">{{readableSeconds(pool.networkStats.networkHashrate / pool.poolStats.poolHashrate * pool.blockRefreshInterval) }}</td>
+                    <td style="padding-right: 10px;" class="poolEffort">{{ formatHashrate(PoolEffort,2,"%") }}</td>
+                    <td style="padding-right: 10px;">{{readableSeconds(pool.networkStats.networkHashrate / pool.poolStats.poolHashrate * pool.blockRefreshInterval) }}</td>
                     <td style="padding-right: 10px;">{{ formatHashrate(pool.totalPaid,3,"") }} [{{ pool.coin.symbol }}]</td>
                 </tr>
                 <br>
@@ -52,11 +52,9 @@
     import {ref,computed, watch, onMounted} from 'vue'
     import {useRoute} from 'vue-router'
     import eChart from './../components/eChart.vue'
-    import {Coin} from '@/definitions/coin.model'
     import {Pool} from '@/definitions/pool.model'
     import {getCoin} from '@/services/getCoin'
     const pool = ref<Pool>();
-    const coin = ref<Coin>();
     const blocks = ref([]);
     const newBlocks = ref([]);
     const coinPrice = ref(0);
@@ -84,8 +82,8 @@
               pool.value = response.data.pool
               //console.log("Returned Pool: ", pool.value)
               getNewBlocks()
-              setPrice(coin.value.symbol)
-              checkEffort(coin.value.family,pool.value.poolEffort, coin.value.name)
+              setPrice(pool.value.coin.symbol)
+              checkEffort(pool.value.coin.family,pool.value.poolEffort, pool.value.coin.name)
         })
         .catch((error) => {
               console.warn("getPools error: ", error)
@@ -145,7 +143,7 @@
           //show if PPLNS - Button is pressed
           return newBlocks.value.filter((block) => block.status=='confirmed')
     });
-    function formatHashrate(value, decimal, unit) {
+    function formatHashrate(value:number, decimal:number, unit:string) {
       if (value === 0) {
           return "0 " + unit;
       } else {
@@ -214,18 +212,23 @@
       }
       
       if (PoolEffort.value >= 500) {
-          effortClass.value = "effort4";
+        //effort4
+          effortClass.value = "#FF4500";
       } else if (PoolEffort.value >= 300) {
-          effortClass.value = "effort3";
+        //effort3
+          effortClass.value = "#FF6347";
       } else if (PoolEffort.value >= 200) {
-          effortClass.value = "effort2";
+        //effort2
+          effortClass.value = "#FF8C00";
       } else if (PoolEffort.value >= 100) {
-          effortClass.value = "effort1";
+        //effort1
+          effortClass.value = "#FFA500";
       }
       else {
-          effortClass.value = "effort0";
+        //effort0
+          effortClass.value = "#50C878";
       }
-      console.log('PoolEffort value', PoolEffort)
+      console.log('EffortClass value', effortClass)
       return PoolEffort.value
     }
     onMounted(() => {
@@ -235,7 +238,4 @@
 
 </script>
 <style>
-    .poolTTF {
-        color: effortClass[color];
-    }
 </style>
