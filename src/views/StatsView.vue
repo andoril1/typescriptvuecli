@@ -36,7 +36,7 @@
                     <td style="padding-right: 10px;">{{ pool.paymentProcessing.minimumPayment }} {{ pool.coin.symbol }}</td>
                     <td style="padding-right: 10px;">{{ pool.poolFeePercent }}%</td>
                     <td style="padding-right: 10px;" class="poolEffort">{{ formatHashrate(PoolEffort,2,"%") }}</td>
-                    <td style="padding-right: 10px;">{{readableSeconds(pool.networkStats.networkHashrate / pool.poolStats.poolHashrate * pool.blockRefreshInterval) }}</td>
+                    <td style="padding-right: 10px;">{{convertTime(pool.networkStats.networkHashrate / pool.poolStats.poolHashrate * pool.blockRefreshInterval) }}</td>
                     <td style="padding-right: 10px;">{{ formatHashrate(pool.totalPaid,3,"") }} [{{ pool.coin.symbol }}]</td>
                 </tr>
                 <br>
@@ -48,15 +48,19 @@
   </template>
   
   <script setup lang="ts">
-    import axios from 'axios'
+    //import axios from 'axios'
     import {ref,computed, watch, onMounted} from 'vue'
     import {useRoute} from 'vue-router'
     import eChart from './../components/eChart.vue'
     import {Pool} from '@/definitions/pool.model'
     import {getCoin} from '@/services/getCoin'
+    import {getBlocks} from '@/services/getBlocks'
+    import {setCoinPrice} from '@/services/setCoinPrice'
+    //import {formatHashrate} from '@/services/formatHashrate'
+    import {convertTime} from '@/services/convertTime'
     const pool = ref<Pool>();
     const blocks = ref([]);
-    const newBlocks = ref([]);
+    //const newBlocks = ref([]);
     const coinPrice = ref(0);
     const PoolEffort = ref(0);
     const route = useRoute();
@@ -71,10 +75,30 @@
       }});
 
     function updateData() {            
-        getPools()
-        getBlocks()
+        //getPools()
+        //getBlocks()
+        setupCoin(id.value)
     }
 
+    async function setupCoin(coinId) {
+    pool.value = await getCoin(coinId)
+    //getNewBlocks()
+    setupBlocks(id.value)
+    //setPrice(pool.value.coin.symbol)
+    setupCoinPrice(pool.value.coin.symbol)
+    checkEffort(pool.value.coin.family,pool.value.poolEffort, pool.value.coin.name)
+    }
+
+    async function setupBlocks(coinId) {
+    const height = ((pool.value.networkStats.blockHeight < 100) ? pool.value.networkStats.blockHeight : 100)
+    blocks.value = await getBlocks(coinId, height)
+    }
+
+    async function setupCoinPrice(coinId) {
+    coinPrice.value = await setCoinPrice(coinId)
+    }
+    
+    /*
     function getPools() {
         axios
         .get('https://pool.flazzard.com/api/pools/' + id.value)
@@ -91,8 +115,6 @@
     }
     
     function setPrice(ticker:string) {
-      console.log("Getting price for : " + ticker)
-      console.log(ticker)
       axios.get('https://api.xeggex.com/api/v2/market/getbysymbol/' + ticker + '%2FUSDT')
           .then((response) => {
               //set coin price
@@ -105,7 +127,7 @@
               coinPrice.value = 0;
           })                      
     }
-  
+    
     function getBlocks() {
       axios
       .get('https://pool.flazzard.com/api/pools' + '/' + id.value + '/blocks')
@@ -119,9 +141,10 @@
       })
       
   }
+      
   function getNewBlocks() {
       var height:number
-      height = ((pool.value.networkStats.blockHeight < 500) ? pool.value.networkStats.blockHeight : 500)
+      height = ((pool.value.networkStats.blockHeight < 100) ? pool.value.networkStats.blockHeight : 100)
       axios
       .get('https://pool.flazzard.com/api/pools' + '/' + id.value + '/blocks?page=0&pageSize=' + height)
       .then((response) => {
@@ -134,15 +157,14 @@
       })
       
   }
-  
+  */
     const filterPending = computed(function() {
-          //show if PPLNS - Button is pressed
           return blocks.value.filter((block) => block.status=='pending')
     });
     const filterConfirmed = computed(function() {
-          //show if PPLNS - Button is pressed
-          return newBlocks.value.filter((block) => block.status=='confirmed')
+          return blocks.value.filter((block) => block.status=='confirmed')
     });
+    
     function formatHashrate(value:number, decimal:number, unit:string) {
       if (value === 0) {
           return "0 " + unit;
@@ -166,7 +188,7 @@
           return ((value / si[i].value).toFixed(decimal).replace(/.0+$|(.[0-9]*[1-9])0+$/, "$1") + " " + si[i].symbol + unit);
           }
       }
-
+    
 // String Convert -> Seconds
   function readableSeconds(t) {
       var seconds = Math.floor(t % 3600 % 60);
@@ -232,8 +254,9 @@
       return PoolEffort.value
     }
     onMounted(() => {
-      getPools()
-      getCoin(id.value, pool.value)
+      //getPools()
+      setupCoin(id.value)
+      //setupBlocks(id.value)
     })
 
 </script>

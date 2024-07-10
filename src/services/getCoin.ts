@@ -1,12 +1,11 @@
-import { Pool } from '@/definitions/pool.model';
 import axios from 'axios';
-export async function getCoin(id, pool:Pool) {
+export async function getCoin(id) {
 
-    const response = await axios
+    return await axios
         .get('https://pool.flazzard.com/api/pools/' + id)
         .then((response) => {
-              pool = response.data.pool
-              console.log("Returned Pool: ", pool)
-              return pool
+              const poolData = response.data.pool
+              console.log("Returned Pool: ", poolData)
+              return poolData
         })
 }
