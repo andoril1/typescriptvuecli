@@ -58,6 +58,7 @@
     import {setCoinPrice} from '@/services/setCoinPrice'
     //import {formatHashrate} from '@/services/formatHashrate'
     import {convertTime} from '@/services/convertTime'
+    import {calcEffort} from '@/services/calcEffort'
     const pool = ref<Pool>();
     const blocks = ref([]);
     //const newBlocks = ref([]);
@@ -87,6 +88,7 @@
     //setPrice(pool.value.coin.symbol)
     setupCoinPrice(pool.value.coin.symbol)
     checkEffort(pool.value.coin.family,pool.value.poolEffort, pool.value.coin.name)
+    //calcEffort(pool.value.coin.family,pool.value.poolEffort, pool.value.coin.name)
     }
 
     async function setupBlocks(coinId) {
@@ -188,7 +190,7 @@
           return ((value / si[i].value).toFixed(decimal).replace(/.0+$|(.[0-9]*[1-9])0+$/, "$1") + " " + si[i].symbol + unit);
           }
       }
-    
+    /*
 // String Convert -> Seconds
   function readableSeconds(t) {
       var seconds = Math.floor(t % 3600 % 60);
@@ -209,6 +211,7 @@
       if (seconds > 0) return sYears + sMonths + sWeeks + sDays + sHours + sMinutes + sSeconds;
       else return 'unknown';
   }
+      */
   function checkEffort(family:string, poolEffort:number, coinName:string) {
       if (family == "alephium") {
           PoolEffort.value = Number(poolEffort) * Math.pow(2, 30) * 100;

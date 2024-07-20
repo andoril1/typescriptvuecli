@@ -1,11 +1,11 @@
 <template>
   <div class="container">
     <div class="row d-flex justify-content-center">
-      <div class="col-auto" v-if="pools.pool">
+      <div class="col-auto" v-if="pool">
           <div class="info-box bg-yellow-gradient">
                   <span class="info-box-text">
                       <br>
-                      <h5>Blocks found by Pool - {{ pools.pool.coin.name }} [{{ pools.pool.coin.symbol }}]</h5>
+                      <h5>Blocks found by Pool - {{ pool.coin.name }} [{{ pool.coin.symbol }}]</h5>
                       <table>
                       <tr>
                           <th id="time">Time</th>
@@ -18,10 +18,10 @@
                       </tr>
                       <tr v-for="block in blocks" :key="block.id">
                           <td style="padding-right: 10px;"><span v-html="renderTimeAgoBox(block.created)"></span></td>
-                          <td style="padding-right: 10px;"><a :href="pools.pool.addressInfoLink.replace(pools.pool.address, block.miner)" target="_blank"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e8eaed"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H600v-80h160v-480H200v480h160v80H200Zm240 0v-246l-64 64-56-58 160-160 160 160-56 58-64-64v246h-80Z"/></svg></a>[{{block.miner.substring(0, 8)}}...{{ block.miner.substring(block.miner.length - 8) }}]</td>
+                          <td style="padding-right: 10px;"><a :href="pool.addressInfoLink.replace(pool.address, block.miner)" target="_blank"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e8eaed"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H600v-80h160v-480H200v480h160v80H200Zm240 0v-246l-64 64-56-58 160-160 160 160-56 58-64-64v246h-80Z"/></svg></a>[{{block.miner.substring(0, 8)}}...{{ block.miner.substring(block.miner.length - 8) }}]</td>
                           <td style="padding-right: 10px;">{{ block.blockHeight }}</td>
                           <td style="padding-right: 10px;">{{ formatHashrate(block.networkDifficulty,2, "") }}</td>
-                          <td style="padding-right: 10px;">{{ formatHashrate(block.reward,1,"") }} {{pools.pool.coin.symbol}}</td>
+                          <td style="padding-right: 10px;">{{ formatHashrate(block.reward,1,"") }} {{pool.coin.symbol}}</td>
                           <td style="padding-right: 10px;" v-if="block.confirmationProgress * 100 > 0"><a :href="block.infoLink" target="_blank"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e8eaed"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H600v-80h160v-480H200v480h160v80H200Zm240 0v-246l-64 64-56-58 160-160 160 160-56 58-64-64v246h-80Z"/></svg></a>{{ block.status }}</td> 
                           <td style="padding-right: 10px;" v-if="block.confirmationProgress * 100 <= 0"><a :href="block.infoLink" target="_blank"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e8eaed"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H600v-80h160v-480H200v480h160v80H200Zm240 0v-246l-64 64-56-58 160-160 160 160-56 58-64-64v246h-80Z"/></svg></a>{{ ' new ' }}</td>    
                           <td style="padding-right: 10px;">{{ formatHashrate(block.confirmationProgress * 100, 2, '%') }}</td>
@@ -35,15 +35,28 @@
   </template>
   
   <script setup lang="ts">
-  import axios from 'axios'
-  import {ref, watch, onMounted} from 'vue'
-  import {useRoute} from 'vue-router'
+    import {ref, watch, onMounted} from 'vue'
+    import {useRoute} from 'vue-router'
+    import {Pool} from '@/definitions/pool.model'
+    import {getCoin} from '@/services/getCoin'
+    import {getBlocks} from '@/services/getBlocks'
           
-          const pools = ref([]);
-          const blocks = ref([]);
-          const route = useRoute();
-          const id = ref(route.params.id);
-          function getPools() {
+    const pool = ref<Pool>();
+    const blocks = ref([]);
+    const route = useRoute();
+    const id = ref(route.params.id);
+    
+    async function setupCoin(coinId) {
+        pool.value = await getCoin(coinId)
+        setupBlocks(id.value)
+    }
+
+    async function setupBlocks(coinId) {
+    const height = ((pool.value.networkStats.blockHeight < 100) ? pool.value.networkStats.blockHeight : 100)
+    blocks.value = await getBlocks(coinId, height)
+    }
+    
+          /*function getPools() {
               axios
               .get('https://pool.flazzard.com/api/pools/' + id.value)
               .then((response) => {
@@ -66,11 +79,11 @@
             .catch((error) => {
                 console.warn("getBlocks error: ", error)
             })
-        }
+        }*/
         watch(blocks,(newValue,oldValue) => { 
               if(newValue != oldValue) {
                   setTimeout(() => {
-                      getBlocks()
+                    setupBlocks(id.value)
                   }, 60000);
           }});
           function formatHashrate(value:number, decimal:number, unit:string) {
@@ -144,7 +157,6 @@
         return "<div class='d-flex align-items-center justify-content-center' style='background-color:" + bgColor + "; color: " + textColor + "; border-radius: " + borderRadius + "; width: 100%; padding: 2px; font-size: 75%; font-weight: 700; text-align: center; height: 20px;'>" + timeAgo + "</div>";
         }
         onMounted(() => {
-          getPools()
-          getBlocks()
+            setupCoin(id.value)
         })
       </script>

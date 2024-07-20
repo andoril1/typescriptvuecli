@@ -10,4 +10,6 @@ export interface Coin {
     discord: string
     telegram: string
     canonicalName: string
+    github: string
+    explorer:string
   }

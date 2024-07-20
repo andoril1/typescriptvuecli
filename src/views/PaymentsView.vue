@@ -1,10 +1,10 @@
 <template>
   <div class="container">
     <div class="row d-flex justify-content-center">
-      <div class="col-auto" v-if="pools.pool">
+      <div class="col-auto" v-if="pool">
           <div class="info-box bg-yellow-gradient">
                   <span class="info-box-text">
-                        <h5>Payments to Miners - {{ pools.pool.coin.name }} [{{ pools.pool.coin.symbol }}]</h5>
+                        <h5>Payments to Miners - {{ pool.coin.name }} [{{ pool.coin.symbol }}]</h5>
                         <table>
                             <tr>
                                 <th id="time">[Time]</th>
@@ -15,7 +15,7 @@
                             <tr v-for="block in blocks" :key="block.id">
                                 <td style="padding-right: 10px;"><span v-html="renderTimeAgoBox(block.created)"></span></td>
                                 <td style="padding-right: 10px;"><a :href="block.addressInfoLink" target="_blank"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e8eaed"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H600v-80h160v-480H200v480h160v80H200Zm240 0v-246l-64 64-56-58 160-160 160 160-56 58-64-64v246h-80Z"/></svg></a>[{{block.address.substring(0, 8)}}...{{ block.address.substring(block.address.length - 8) }}]</td>
-                                <td style="padding-right: 10px;">{{ formatHashrate(block.amount,2,"") }} {{pools.pool.coin.symbol}}</td>
+                                <td style="padding-right: 10px;">{{ formatHashrate(block.amount,2,"") }} {{pool.coin.symbol}}</td>
                                 <td style="padding-right: 10px;"><a :href="block.transactionInfoLink" target="_blank"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e8eaed"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H600v-80h160v-480H200v480h160v80H200Zm240 0v-246l-64 64-56-58 160-160 160 160-56 58-64-64v246h-80Z"/></svg></a>[{{ block.transactionConfirmationData.substring(0, 8)}}...{{block.transactionConfirmationData.substring(block.transactionConfirmationData.length - 8) }}]</td>
                             </tr>
                         </table>
@@ -24,16 +24,23 @@
           </div>
     </div>
   </div>
-  </template>
+</template>
   
-  <script setup lang="ts">
-  import axios from 'axios'
-import {ref, watch, onMounted} from 'vue'
-import {useRoute} from 'vue-router'        
-        const pools = ref([]);
-        const blocks = ref([]);
-        const route = useRoute();
-        const id = ref(route.params.id);
+<script setup lang="ts">
+    import axios from 'axios';
+    import {ref, watch, onMounted} from 'vue'
+    import {useRoute} from 'vue-router'
+    import {Pool} from '@/definitions/pool.model'
+    import {getCoin} from '@/services/getCoin'
+    const pool = ref<Pool>();    
+    const blocks = ref([]);
+    const route = useRoute();
+    const id = ref(route.params.id);
+    
+    async function setupCoin(coinId) {
+        pool.value = await getCoin(coinId)
+    }
+    /*
         function getPools() {
             axios
             .get('https://pool.flazzard.com/api/pools/' + id.value)
@@ -46,6 +53,7 @@ import {useRoute} from 'vue-router'
             })
             
         }
+            */
         function getBlocks() {
           axios
           .get('https://pool.flazzard.com/api/pools' + '/' + id.value + '/payments')
@@ -135,7 +143,7 @@ import {useRoute} from 'vue-router'
       return "<div class='d-flex align-items-center justify-content-center' style='background-color:" + bgColor + "; color: " + textColor + "; border-radius: " + borderRadius + "; width: 100%; padding: 2px; font-size: 75%; font-weight: 700; text-align: center; height: 20px;'>" + timeAgo + "</div>";
       }
       onMounted(() => {
-          getPools()
+          setupCoin(id.value)
           getBlocks()
         })
   </script>

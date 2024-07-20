@@ -1,10 +1,10 @@
 <template>
   <div class="container">
     <div class="row d-flex justify-content-center">
-        <div class="col-auto" v-if="pools.pool">
+        <div class="col-auto" v-if="pool">
             <div class="info-box bg-yellow-gradient">
                 <span class="info-box-text">
-                    <h5>Your Dashboard - {{ pools.pool.coin.name }} [{{ pools.pool.coin.symbol }}]</h5>
+                    <h5>Your Dashboard - {{ pool.coin.name }} [{{ pool.coin.symbol }}]</h5>
                     <hr>
                     <h5>{{headerText}}</h5>
                     <input v-model="walletAddress" type="input" style="width: 85%" id="walletAddress"><input type="submit" @click="checkWallet()" autocomplete="on" class="btn btn-info btn-fill btn-sm">
@@ -29,7 +29,7 @@
                                 <th id="time" style="padding-right: 10px;">[24 Hour Estimate]</th>
                             </tr>
                             <tr>
-                                <td style="padding-right: 10px;">{{readableSeconds(pools.pool.networkStats.networkHashrate / minerHashrate * pools.pool.blockRefreshInterval) }}</td>
+                                <td style="padding-right: 10px;">{{convertTime(pool.networkStats.networkHashrate / minerHashrate * pool.blockRefreshInterval) }}</td>
                                 <td style="padding-right: 10px;">{{ formatHashrate(blocks.pendingBalance,2,"") }}</td>
                             </tr>
                         </table>
@@ -84,7 +84,7 @@
                                         
                                     </tr>
                                 </div>
-                                <div v-if="buttonString == 'miners'">
+                                <div v-if="buttonString == 'miners' && minerPerformance.length">
                                         <tr>
                                             <th id="one">[Worker name]</th>
                                             <th id="two">[Hashrate]</th>
@@ -97,13 +97,21 @@
                                             <td style="padding-right: 10px;">{{formatHashrate(_id.hashrate,2,"H/s")}}<hr></td>
                                             <td style="padding-right: 10px;">{{formatHashrate(_id.sharesPerSecond, 2,"S/s")}}<hr></td>
                                         </tr>
+                                        
+                                </div>
+                                <div v-if="buttonString == 'miners' && !minerPerformance.length">
+                                    <h5>Sorry, your miners havn't been detected yet, please be patient</h5>
+                                    
                                 </div>
                                 <div v-if="buttonString == 'customPayout'">
                                     <tr>
                                         <th id="one">[Current Payout Limit]</th>
                                     </tr>
-                                    <tr>
-                                        <td style="padding-right: 10px;">[{{ minerSettings.paymentThreshold }} {{ pools.pool.coin.symbol }}]<hr></td>
+                                    <tr v-if="minerSettings.paymentThreshold">
+                                        <td style="padding-right: 10px;">[{{ minerSettings.paymentThreshold }} {{ pool.coin.symbol }}]<hr></td>
+                                    </tr>
+                                    <tr v-else>
+                                        <td style="padding-right: 10px;">[No threshold currently set.]<hr></td>
                                     </tr>
                                     <tr>
                                         <th id="one">[Enter ip-address]</th>
@@ -123,27 +131,37 @@
         </div>
     </div>
 </div>
-  </template>
+</template>
   
-  <script setup lang="ts">
-  import axios from 'axios'
-import {ref,watch, onMounted} from 'vue'
-import {useRoute} from 'vue-router'        
-        const pools = ref([]);
-        const blocks = ref([]);
-        const minerBlocks = ref([]);
-        const minerPay = ref([]);
-        const minerPerformance = ref([]);
-        let minerHashrate = ref(0);
-        const minerSettings = ref([]);
-        const route = useRoute();
-        const id = ref(route.params.id);
-        const walletAddress = ref("");
-        const ipAddress = ref("");
-        const thresholdAmount = ref(""); 
-        const buttonString =ref("blocks");
-        let headerText =ref("Please input your address to load stats");
+<script setup lang="ts">
+    import axios from 'axios'
+    import {ref,watch, onMounted} from 'vue'
+    import {useRoute} from 'vue-router'
+    import {Pool} from '@/definitions/pool.model'
+    import {MinerBlocks} from '@/definitions/minerBlocks.model'
+    import {getCoin} from '@/services/getCoin'
+    import {convertTime} from '@/services/convertTime'
+    const pool = ref<Pool>();     
+    const blocks = ref<MinerBlocks>();
+    const minerBlocks = ref([]);
+    const minerPay = ref([]);
+    const minerPerformance = ref([]);
+    let minerHashrate = ref(0);
+    const minerSettings = ref([]);
+    const route = useRoute();
+    const id = ref(route.params.id);
+    const walletAddress = ref("");
+    const ipAddress = ref("");
+    const thresholdAmount = ref(""); 
+    const buttonString =ref("blocks");
+    let headerText =ref("Please input your address to load stats");
 
+    async function setupCoin(coinId) {
+    pool.value = await getCoin(coinId)
+    }
+
+
+/*
         function getPools() {
             axios
             .get('https://pool.flazzard.com/api/pools/' + id.value)
@@ -156,18 +174,20 @@ import {useRoute} from 'vue-router'
             })
             
         }
+            */
         function getBlocks() {
             axios
             .get('https://pool.flazzard.com/api/pools' + '/' + id.value + '/' + 'miners' + '/' + walletAddress.value)
             .then((response) => {
                 blocks.value =response.data
-                //console.log("Returned Blocks: ", response.data)
+                console.log("Returned Blocks: ", response.data)
 
             })
             .catch((error) => {
                 console.warn("getBlocks error: ", error)
             })           
         }
+
         function getMinerBlocks() {
             axios
             .get('https://pool.flazzard.com/api/pools' + '/' + id.value + '/' + 'miners' + '/' + walletAddress.value + '/blocks' )
@@ -206,7 +226,7 @@ import {useRoute} from 'vue-router'
             .get('https://pool.flazzard.com/api/pools' + '/' + id.value + '/' + 'miners' + '/' + walletAddress.value + '/settings' )
             .then((response) => {
                 minerSettings.value =response.data
-                //console.log("Returned MinerSettings: ", response.data)
+                console.log("Returned MinerSettings: ", response.data)
             })
             .catch((error) => {
                 console.warn("getMinerSettings error: ", error)
@@ -320,6 +340,7 @@ import {useRoute} from 'vue-router'
       }
       return "<div class='d-flex align-items-center justify-content-center' style='background-color:" + bgColor + "; color: " + textColor + "; border-radius: " + borderRadius + "; width: 100%; padding: 2px; font-size: 75%; font-weight: 700; text-align: center; height: 20px;'>" + timeAgo + "</div>";
       }
+      /*
       // String Convert -> Seconds
       function readableSeconds(t) {
             var seconds = Math.floor(t % 3600 % 60);
@@ -339,8 +360,8 @@ import {useRoute} from 'vue-router'
             var sSeconds = seconds > 0 ? ((years > 0 || months > 0 || weeks > 0 || days > 0 || hours > 0 || minutes > 0) ? " " : "") + seconds + (seconds == 1 ? "s" : "s") : ((years < 1 && months < 1 && weeks < 1 && days < 1 && hours < 1 && minutes < 1 ) ? " Few milliseconds" : "");
             if (seconds > 0) return sYears + sMonths + sWeeks + sDays + sHours + sMinutes + sSeconds;
             else return 'unknown';
-        }
+        }*/
         onMounted(() => {
-          getPools()
+          setupCoin(id.value)
         })
   </script>
